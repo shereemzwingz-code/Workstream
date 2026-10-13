@@ -81,7 +81,7 @@ matchMedia("(prefers-color-scheme:dark)").addEventListener?.("change",()=>render
   if(dl){ S.exportDl=dl; $("exportBtn").hidden=false; $("exportBtn").onclick=()=>doExport(dl); }
   const uid=user?await user.id():null;
   if(!db||!uid){ S.loaded=true; $("status").innerHTML=`<div class="banner">Sign in to load and save your tasks.</div>`; render(); return; }
-  S.db=db; S.uid=uid; mqLoadSaved();
+  S.db=db; S.uid=uid; mqLoadSaved(); wsSyncStart();
   lcol().onSnapshot(snap=>{ S.links=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.url||x.label); render(); },()=>{});
   ucol().onSnapshot(snap=>{ S.utm=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.link); if(S.view==="tools") utmLogOut(); },()=>{});
   bgcol().onSnapshot(snap=>{ S.badges=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.name); render(); },()=>{});

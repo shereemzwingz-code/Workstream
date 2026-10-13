@@ -6,6 +6,7 @@
  "shell/body.html",
  "shell/script-open.html",
  "data/state-and-boot-helpers.js",
+ "data/synced-settings.js",
  "screens/home.js",
  "agents/partner-kit.js",
  "agents/ambassador-utm.js",
