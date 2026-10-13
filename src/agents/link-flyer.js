@@ -36,6 +36,16 @@ function lfHTML(p){
   </div>`;
 }
 
+// Make + save the tracked link (UTM log, partner, timeline). Returns {link} or {why}.
+async function lfMakeLink(p,base,proj){
+  const L=lfLinkFor(p,base,proj); if(L.why) return {why:L.why};
+  const now=new Date().toISOString();
+  if(!(S.utm||[]).some(u=>u.link===L.link)) await ucol().add({base:L.base,src:L.src,med:"community_partner",camp:L.camp,cont:L.cont,link:L.link,material:L.org+" enrollment link",where:"",pid:p.id,date:new Date().toLocaleDateString("en-US"),by:"Sheree Taylor",approved:"",createdAt:now});
+  await pcol().doc(p.id).update({utmLink:L.link,enrollBase:L.base,project:String(proj||"").trim(),kit:{...(p.kit||{}),landing:true},
+    history:[...(p.history||[]),{at:now,text:"🔗 Tracked link made and saved to the UTM log: "+L.link,changes:{}}].slice(-60)});
+  p.utmLink=L.link; p.history=[...(p.history||[]),{at:now,text:"🔗 Tracked link made",changes:{}}];
+  agLog("Tracked link made: "+L.org,{act:"utm",ref:p.id}); return {link:L.link};
+}
 async function lfRun(btn){
   const p=(S.partners||[]).find(x=>x.id===S.hub); if(!p) return;
   const say=t=>{ S.lfMsg={pid:p.id,t}; const el=$("lfstat"); if(el) el.textContent=t; };
@@ -43,13 +53,7 @@ async function lfRun(btn){
   try{
     if(!p.utmLink){
       const base=(document.querySelector("[data-lfbase]")||{}).value||"", proj=(document.querySelector("[data-lfproj]")||{}).value||"";
-      const L=lfLinkFor(p,base,proj); if(L.why){ say("⚠️ "+L.why); return; }
-      say("🔗 Making the tracked link…"); const now=new Date().toISOString();
-      if(!(S.utm||[]).some(u=>u.link===L.link)) await ucol().add({base:L.base,src:L.src,med:"community_partner",camp:L.camp,cont:L.cont,link:L.link,material:L.org+" enrollment link",where:"",pid:p.id,date:new Date().toLocaleDateString("en-US"),by:"Sheree Taylor",approved:"",createdAt:now});
-      await pcol().doc(p.id).update({utmLink:L.link,enrollBase:L.base,project:proj.trim(),kit:{...(p.kit||{}),landing:true},
-        history:[...(p.history||[]),{at:now,text:"🔗 Tracked link made and saved to the UTM log: "+L.link,changes:{}}].slice(-60)});
-      p.utmLink=L.link; p.history=[...(p.history||[]),{at:now,text:"🔗 Tracked link made",changes:{}}];
-      agLog("Tracked link made: "+L.org,{act:"utm",ref:p.id});
+      say("🔗 Making the tracked link…"); const r=await lfMakeLink(p,base,proj); if(r.why){ say("⚠️ "+r.why); return; }
     }
     if(!S.mcp){ say("✓ Tracked link saved. The QR + flyer step needs Canva and Google Drive allowed for this page (Permissions menu) — then tap again."); return; }
     say("📄 Making the QR code and flyer in Canva… (about 30 seconds)");

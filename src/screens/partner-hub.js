@@ -140,6 +140,7 @@ function hubHTML(p){
   return `<div class="hub">
   <div class="pcard${p.tier===TIERS[0]?" prio":""}" data-pid="${esc(p.id)}" style="--sc:${ssVar(p)};--pc2:${priVar(priOf(p))}">
     ${hubContactHTML(p)}
+    ${autoHTML(p)}
     ${nx?`<div class="hubnext"><div class="hnx hot"><div class="why"><b>${esc(nx.t)}</b><span>${esc(nx.w)}</span></div>${nx.b}</div></div>`:""}
     <div class="hubtopbar"><button class="mini" data-hubback>← All partners</button></div>
     <div class="htabs" role="tablist" aria-label="${esc(org)}">${HUB_TABS.map(([k,l])=>`<button role="tab" data-hubtab="${k}" aria-selected="${tab===k}">${l}${cnt[k]?` <b>${cnt[k]}</b>`:""}</button>`).join("")}</div>
