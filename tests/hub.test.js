@@ -55,6 +55,7 @@ const dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true
   } });
 const w = dom.window, $ = s => w.document.querySelector(s), list = () => $('#list').textContent;
 const wait = ms => new Promise(r => setTimeout(r, ms));
+const tab = async k => { $('[data-hubtab="'+k+'"]').click(); await wait(30); };
 let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
 
 (async () => {
@@ -69,21 +70,25 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   ok(!list().includes('Riverside Library'), 'hub shows only this partner (no other partners on screen)');
   // 2. Do next
   ok(list().includes('Review 1 email draft waiting'), 'Do next: draft waiting');
-  ok(/Follow up — quiet 9 days/.test(list()), 'Do next: 9-day follow-up');
-  ok(list().includes('1 overdue task'), 'Do next: overdue task');
-  ok(w.document.querySelectorAll('.hnx').length === 3, 'Do next shows the top 3 only');
+  ok(w.document.querySelectorAll('.hnx').length === 1, 'Do next shows ONE thing at a time');
+  ok(!/Follow up — quiet/.test(list()), 'the other suggestions wait their turn');
+  ok(w.document.querySelectorAll('[data-hubtab]').length === 6 && $('[data-hubtab="today"]').getAttribute('aria-selected') === 'true', 'six tabs, starting on Today');
+  ok($('[data-hubtab="email"] b') && $('[data-hubtab="email"] b').textContent === '1', 'Email tab shows 1 waiting');
   // 3. sections
   ok(list().includes('Sunrise Community Center — send MSA draft'), 'linked task appears');
-  ok(list().includes('Waiting for your OK'), 'Outbox draft appears in the hub');
-  ok(list().includes('Jordan Rivera'), 'designee badge appears in People & badges');
-  ok(list().includes('canva.com/design/TEST'), 'deck link appears in Links & files');
-  ok(list().includes('Emailed the partnership overview'), 'timeline appears');
+  ok(!list().includes('Jordan Rivera') && !list().includes('Emailed the partnership overview'), 'other tabs stay hidden until tapped');
+  await tab('email'); ok(list().includes('Waiting for your OK') && $('#list [data-pbody]'), 'Email tab: Outbox draft + email box');
+  await tab('people'); ok(list().includes('Jordan Rivera'), 'People tab: designee badge');
+  await tab('links'); ok(list().includes('canva.com/'), 'Links tab: deck link');
+  await tab('history'); ok(list().includes('Emailed the partnership overview') && $('#list [data-pupd]'), 'History tab: timeline + quick log');
+  await tab('kit'); ok($('#list .kitbar') && $('#list [data-pact="budget"]'), 'Kit tab: kit folder + Budget/MSA/Deck');
+  await tab('today');
   // 4. an existing card button still works inside the hub (Edit → form)
   $('#list .pcard [data-pact="edit"]').click(); await wait(50);
   ok($('#list .pform'), 'Edit button works inside the hub');
   w.eval('S.pEdit=null; renderList();'); await wait(20);
   // 5. Open draft → Outbox with that draft selected
-  $('[data-hubob]').click(); await wait(50);
+  $('.hubnext [data-hubob]').click(); await wait(50);
   ok(w.eval('S.view') === 'outbox' && w.eval('S.obSel') === 'q_test', 'Open draft jumps to that draft in the Outbox');
   ok(w.eval('S.hub') === null, 'leaving Partners closes the hub');
   // 6. back button returns to the full list
@@ -92,6 +97,7 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   ok(w.eval('S.hub') === null && list().includes('Riverside Library'), 'Back returns to the full partner list');
   // 7. one tap: tracked link (+ QR + flyer when Canva is allowed), all logged
   w.eval('hubOpen("p_test")'); await wait(50);
+  await tab('links');
   ok(list().includes('Make link + QR + flyer'), 'hub offers the one-tap link + QR + flyer');
   $('[data-lfbase]').value = 'ampion.net';  $('[data-lfproj]').value = 'Sunrise';
   $('[data-lfgo]').click(); await wait(100);
@@ -115,7 +121,7 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   ok($('#navBack').hidden, 'no Back button on the first screen');
   w.eval('S.view="partners"; render();'); await wait(30);
   [...w.document.querySelectorAll('#list .pcard')].find(c => c.dataset.pid === 'p_test').querySelector('[data-pact="toggle"]').click(); await wait(30);
-  $('[data-hubob]').click(); await wait(30);
+  $('.hubnext [data-hubob]').click(); await wait(30);
   ok(w.eval('S.view') === 'outbox' && !$('#navBack').hidden && $('#navBackTo').textContent === 'Back to Sunrise Community Center (TEST)', 'Back names where it goes: ' + $('#navBackTo').textContent);
   $('#navBack').click(); await wait(30);
   ok(w.eval('S.view') === 'partners' && w.eval('S.hub') === 'p_test', 'Back from the draft returns to the partner hub');
@@ -129,6 +135,7 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   w.eval('hubOpen("p_test")'); await wait(50);
   const cc = $('.ccard'); ok(cc, 'hub opens with a contact card');
   ok(cc.textContent.includes('Dana Test') && $('.ccav').textContent === 'DT', 'card shows name and initials avatar');
+  ok(cc.querySelector('details.ccmore') && !cc.querySelector('details.ccmore').open, 'details are folded away');
   ok(cc.querySelector('a[href="tel:3125550100"]') && cc.querySelector('a[href="sms:3125550100"]') && cc.querySelector('a[href="mailto:dana@example.org"]'), 'Call / Text / Email are one tap');
   let saved = null; w.eval('S.dl={save:async o=>{ window.__saved=o; }}');
   $('[data-ccsave]').click(); await wait(30); saved = w.__saved;
@@ -138,6 +145,7 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   ok($('.ccard a.off') && $('.ccard').textContent.includes('+ Add phone'), 'missing phone shows "+ Add phone" and greys out Call/Text');
   // 10. one-tap badge — add a designee, then the whole chain runs (Canva/email stubbed in this test)
   w.eval('hubOpen("p_test")'); await wait(30);
+  await tab('people');
   ok([...w.document.querySelectorAll('[data-btgo]')].some(b => b.textContent.includes('Make badge')), 'each needed badge has a one-tap "Make badge" button');
   w.eval(`S.mcp={}; window.__calls=[];
     badgeCanva=async bd=>{ __calls.push("canva"); await bgcol().doc(bd.id).update({canvaId:"C1",canvaUrl:"https://canva.com/C1",agentId:11}); return "u"; };
@@ -154,7 +162,7 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   ok(list().includes('Ready to print on the Badgy'), 'says it is ready to print');
   // ambiguous photo → stops and asks, never guesses
   w.eval(`mailImages=async (t,k)=>[{uri:"x1",name:"IMG_001.jpg"},{uri:"x2",name:"IMG_002.jpg"}]; __calls=[];`);
-  $('[data-btgo]').click(); await wait(300);
+  await tab('people'); $('[data-btgo]').click(); await wait(300);
   ok(/Found 2 possible photos/.test(list()) && $('[data-btpick]') && !w.__calls.some(c => c.startsWith('add:')), 'two unclear photos → stops and shows Pick, places nothing');
   ok(errors.length === 0, 'no page errors: ' + errors.join(' | '));
   console.log(`PASS partner hub: ${pass} checks`); process.exit(0);

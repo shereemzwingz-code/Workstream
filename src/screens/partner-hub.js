@@ -26,7 +26,14 @@ S.hub=null;
 .hsteps i.on{background:var(--s-c);color:var(--s-c-t);border-color:transparent}
 .hempty{font-size:13.5px;color:var(--muted)}
 .hlink{overflow-wrap:anywhere;font-size:13px}
-.hub .crmcols>.crmbox:first-child{display:none}
+.htabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:12px 14px 0;border-bottom:1px solid var(--line)}
+.htabs::-webkit-scrollbar{display:none}
+.htabs button{flex:none;border:0;background:none;padding:10px 12px;min-height:44px;font:inherit;font-size:14px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.htabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.htabs button b{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 7px;font-size:12px;margin-left:4px}
+.hbody{padding:14px;display:grid;gap:12px}
+.hubtopbar{padding:10px 14px 0}
+.ccmore summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--muted)}
 .ccard{margin:14px 14px 0;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px;box-shadow:var(--shadow)}
 .cchead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .ccav{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:22px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--head2,#5A1E8C));flex:none}
@@ -77,7 +84,7 @@ function hubNext(p){
   if(p.stage==="Emailed"&&ds!=null&&ds>=7) n.push({hot:1,t:`Follow up — quiet ${ds} days`,w:"No reply since your last email",b:`<button class="pbtn main" data-pact="draft">✍️ Draft follow-up</button>`});
   if(!p.email) n.push({t:"Add their email",w:"Drafts can't go out without it",b:`<button class="pbtn" data-pact="edit">✏️ Add email</button>`});
   if(late.length) n.push({hot:1,t:`${late.length} overdue task${late.length>1?"s":""}`,w:late.map(t=>t.title).slice(0,2).join(" · "),b:`<button class="pbtn" data-goto="${esc(late[0].id)}">Open task</button>`});
-  if(p.needsKit&&typeof kitLeft==="function"&&kitLeft(p)>0) n.push({t:`Finish the kit — ${kitLeft(p)} left`,w:"Slide, MSA and budget for this partner",b:`<button class="pbtn" data-pact="kitopen">📁 Open kit</button>`});
+  if(p.needsKit&&typeof kitLeft==="function"&&kitLeft(p)>0) n.push({t:`Finish the kit — ${kitLeft(p)} left`,w:"Slide, MSA and budget for this partner",b:`<button class="pbtn" data-hubtab="kit">📁 Open kit</button>`});
   const needBadge=hubBadges(p).filter(b=>b.status!=="Made");
   if(needBadge.length) n.push({t:`${needBadge.length} badge${needBadge.length>1?"s":""} still needed`,w:needBadge.map(b=>b.name).join(", "),b:`<button class="pbtn main" data-btgo="${esc(needBadge[0].id)}">🪪 Make badge</button>`});
   if(!String(p.nextStep||"").trim()) n.push({t:"Set a next step",w:"Every partner should have one concrete action",b:`<button class="pbtn" data-hubfocus="next">Set it</button>`});
@@ -97,40 +104,50 @@ function hubContactHTML(p){ const nm=p.name&&p.name!==p.org?p.name:"", org=p.org
       <div class="ccid"><b>${esc(nm||org)}</b>${p.role?`<span>${esc(p.role)}</span>`:""}${nm?`<span>${esc(org)}</span>`:""}</div>
       <button class="mini" data-pact="edit">✏️ Edit</button></div>
     <div class="ccacts">${act("tel:"+tel,"📞","Call",!!tel)}${act("sms:"+tel,"💬","Text",!!tel)}${act("mailto:"+(p.email||""),"✉️","Email",!!p.email)}<button type="button" data-ccsave><span aria-hidden="true">📇</span>Save</button></div>
-    <div class="cclines">${line("Phone",p.phone,true)}${line("Email",p.email,true)}${p.source?line("Met at",p.source):""}${(p.owner||p.owner2)?line("DRE lead",[p.owner,p.owner2].filter(Boolean).join(" · ")):""}${p.reach?line("LMI reach",p.reach):""}</div>
-    ${p.summary?`<div style="font-size:14px">${esc(p.summary)}</div>`:""}
-    ${p.notes?`<details><summary class="crmk" style="cursor:var(--cur-pointer);margin:0">Notes</summary><div style="white-space:pre-line;font-size:13.5px;margin-top:6px">${esc(p.notes)}</div></details>`:""}
+    <details class="ccmore"><summary>Contact details</summary><div class="cclines">${line("Phone",p.phone,true)}${line("Email",p.email,true)}${p.source?line("Met at",p.source):""}${(p.owner||p.owner2)?line("DRE lead",[p.owner,p.owner2].filter(Boolean).join(" · ")):""}${p.reach?line("LMI reach",p.reach):""}</div>
+    ${p.summary?`<div style="font-size:14px;margin-top:8px">${esc(p.summary)}</div>`:""}
+    ${p.notes?`<div style="white-space:pre-line;font-size:13.5px;margin-top:8px;color:var(--muted)">${esc(p.notes)}</div>`:""}</details>
   </section>`; }
+// Pull the pieces of the existing partner card so every button keeps its proven behavior.
+function crmParts(p){ const t=document.createElement("template"); t.innerHTML=crmHTML(p); const c=t.content.querySelector(".crm")||t.content;
+  const q=s=>{ const el=c.querySelector(s); return el?el.outerHTML:""; };
+  const stepsEl=c.querySelector(".steps"); const tlEl=c.querySelector(".tl"); const tlAll=c.querySelector('[data-pact="tlall"]');
+  const emailEl=[...c.querySelectorAll(".crmbox")].find(x=>x.querySelector("[data-pbody]"));
+  return { steps:stepsEl?stepsEl.parentElement.outerHTML:"", row:q(".crmrow"), kit:q(".kitbar"), email:emailEl?emailEl.outerHTML:"", log:q(".logbox"),
+    tl:(tlEl?tlEl.outerHTML:`<div class="hempty">Nothing logged yet.</div>`)+(tlAll?tlAll.outerHTML:""), panel:q(".ppanel"),
+    kitBtns:[...c.querySelectorAll('.crmfoot [data-pact]')].filter(b=>/^(budget|msa|deck|savings|abp)$/.test(b.dataset.pact)).map(b=>b.outerHTML).join("") }; }
+S.hubTab="today";
+const HUB_TABS=[["today","Today"],["email","Email"],["kit","Kit"],["people","People"],["links","Links"],["history","History"]];
 function hubHTML(p){
-  const org=p.org||p.name; const ed=S.pEdit===p.id; const nx=hubNext(p);
-  const ob=hubOutbox(p), bd=hubBadges(p), ln=hubLinks(p);
-  const desHere=S.des&&S.des.org&&hubMatch(p,S.des.org), ambHere=S.amb&&S.amb.name&&hubMatch(p,S.amb.org,S.amb.partner);
+  const org=p.org||p.name; const ed=S.pEdit===p.id;
+  if(S.pPanel&&S.pPanel.id===p.id) S.hubTab="kit";
+  const tab=HUB_TABS.some(t=>t[0]===S.hubTab)?S.hubTab:"today";
+  const nx=hubNext(p)[0], ob=hubOutbox(p), bd=hubBadges(p), ln=hubLinks(p);
+  const open=pTasks(p).filter(t=>t.status!=="Complete");
+  const cnt={email:ob.filter(x=>x.status!=="approved").length,people:bd.filter(b=>b.status==="Needed").length,today:0,kit:0,links:0,history:0};
+  const parts=ed?null:crmParts(p);
+  let body="";
+  if(ed) body=pFormHTML(p,false);
+  else if(tab==="today") body=`${parts.steps}${parts.row}
+    <div class="hubbox"><h4>Tasks <span>${open.length}</span></h4>${open.length?open.map(t=>`<div class="hrow" data-goto="${esc(t.id)}" role="button" tabindex="0" style="cursor:pointer"><span class="t">${esc(t.title)}<small>${esc(t.status)}${t.dueDate?" · due "+esc(fmtDue(t)):""}</small></span><span aria-hidden="true">›</span></div>`).join(""):`<div class="hempty">No open tasks. Type a next step above and tap ➕ Task.</div>`}</div>`;
+  else if(tab==="email") body=`${ob.length?`<div class="hubbox"><h4>Waiting in Outbox</h4>${ob.map(x=>`<div class="hrow"><span class="t">${esc(x.title||x.subject||"Draft")}<small>${x.status==="approved"?"✅ In your Outlook Drafts":"Waiting for your OK"} · ${esc(fmtShort(x.at))}</small></span><button class="mini" data-hubob="${esc(x.id)}">Open</button></div>`).join("")}</div>`:""}${parts.email}`;
+  else if(tab==="kit") body=`${parts.kit}<div class="pbtns">${parts.kitBtns}</div>${parts.panel}`;
+  else if(tab==="people") body=`<div class="hubbox">${bd.length?bd.map(btRowHTML).join(""):`<div class="hempty">No designees yet.</div>`}
+      <div class="nextbox"><input data-btname placeholder="Designee's full name" aria-label="Designee's full name"><button class="pbtn" data-btadd>🪪 Add + make badge</button></div></div>
+    <div class="pbtns"><button class="pbtn" data-hubgo="amb">🦋 Add an ambassador</button></div>`;
+  else if(tab==="links") body=`<div class="hubbox">${ln.length?ln.map(l=>`<div class="hrow"><span class="t">${esc(l.label)}<small class="hlink">${esc(l.url)}</small></span><a class="mini" href="${esc(l.url)}" target="_blank" rel="noopener">Open</a><button class="mini" data-pcopy="${esc(l.url)}">Copy</button></div>`).join(""):`<div class="hempty">No links yet.</div>`}${lfHTML(p)}</div>`;
+  else if(tab==="history") body=`${parts.log}${parts.tl}`;
   return `<div class="hub">
-  <div class="hubtop"><button class="pbtn" data-hubback>← All partners</button><span class="crumb">Partners › ${esc(org)}</span></div>
   <div class="pcard${p.tier===TIERS[0]?" prio":""}" data-pid="${esc(p.id)}" style="--sc:${ssVar(p)};--pc2:${priVar(priOf(p))}">
     ${hubContactHTML(p)}
-    <div class="hubnext"><h4>✨ Do next</h4>${nx.length?nx.map(x=>`<div class="hnx${x.hot?" hot":""}"><div class="why"><b>${esc(x.t)}</b><span>${esc(x.w)}</span></div>${x.b}</div>`).join(""):`<div class="hempty">Nothing waiting on you for this partner. 💗</div>`}</div>
-    <div class="pdetail" style="border-top:0">${ed?pFormHTML(p,false):crmHTML(p)}</div>
-    <div class="hubgrid">
-      <div class="hubbox"><h4>📥 Outbox <span>${ob.length}</span></h4>
-        ${ob.length?ob.map(x=>`<div class="hrow"><span class="t">${esc(x.title||x.subject||"Draft")}<small>${x.status==="approved"?"✅ In your Outlook Drafts":"Waiting for your OK"} · ${esc(fmtShort(x.at))}</small></span><button class="mini" data-hubob="${esc(x.id)}">Open</button></div>`).join(""):`<div class="hempty">No drafts for this partner. Tap ✍️ Draft follow-up above to make one.</div>`}
-      </div>
-      <div class="hubbox"><h4>🪪 People &amp; badges <span>${bd.length}</span></h4>
-        ${bd.length?bd.map(btRowHTML).join(""):`<div class="hempty">No designees or badges yet.</div>`}
-        <div class="nextbox"><input data-btname placeholder="Designee's full name" aria-label="Designee's full name"><button class="pbtn" data-btadd>🪪 Add + make badge</button></div>
-        ${desHere?`<div class="hrow"><span class="t">Designee in progress<small>${esc(S.des.name||S.des.org)}</small></span><button class="mini" data-hubgo="des">Continue</button></div>`:""}
-        ${ambHere?`<div class="hrow"><span class="t">Ambassador in progress<small>${esc(S.amb.name)}</small></span><button class="mini" data-hubgo="amb">Continue</button></div>`:""}
-        <div class="pbtns"><button class="pbtn" data-hubgo="des">➕ Designee</button><button class="pbtn" data-hubgo="amb">➕ Ambassador</button></div>
-      </div>
-      <div class="hubbox"><h4>🔗 Links &amp; files <span>${ln.length}</span></h4>
-        ${ln.length?ln.map(l=>`<div class="hrow"><span class="t">${esc(l.label)}<small class="hlink">${esc(l.url)}</small></span><a class="mini" href="${esc(l.url)}" target="_blank" rel="noopener">Open</a><button class="mini" data-pcopy="${esc(l.url)}">Copy</button></div>`).join(""):`<div class="hempty">No links yet. Deck, UTM, flyer, budget and MSA links show here once made.</div>`}
-        ${lfHTML(p)}
-      </div>
-    </div>
+    ${nx?`<div class="hubnext"><div class="hnx hot"><div class="why"><b>${esc(nx.t)}</b><span>${esc(nx.w)}</span></div>${nx.b}</div></div>`:""}
+    <div class="hubtopbar"><button class="mini" data-hubback>← All partners</button></div>
+    <div class="htabs" role="tablist" aria-label="${esc(org)}">${HUB_TABS.map(([k,l])=>`<button role="tab" data-hubtab="${k}" aria-selected="${tab===k}">${l}${cnt[k]?` <b>${cnt[k]}</b>`:""}</button>`).join("")}</div>
+    <div class="hbody" role="tabpanel">${body}</div>
   </div></div>`;
 }
 
-function hubOpen(id){ S.view="partners"; S.hub=id; S.pOpen=id; S.pEdit=null; S.pPanel=null; S.pSSMenu=null; render(); window.scrollTo&&window.scrollTo({top:0,behavior:"smooth"}); }
+function hubOpen(id){ if(S.hub!==id) S.hubTab="today"; S.view="partners"; S.hub=id; S.pOpen=id; S.pEdit=null; S.pPanel=null; S.pSSMenu=null; render(); window.scrollTo&&window.scrollTo({top:0,behavior:"smooth"}); }
 function hubClose(){ const id=S.hub; S.hub=null; S.pOpen=null; S.pEdit=null; S.pPanel=null; render();
   requestAnimationFrame(()=>{ const el=id&&document.querySelector(`.pcard[data-pid="${CSS.escape(id)}"]`); el&&el.scrollIntoView({block:"center"}); }); }
 document.addEventListener("click",e=>{
@@ -142,6 +159,7 @@ document.addEventListener("click",e=>{
     if(k==="des"&&p&&!(S.des&&S.des.org)){ S.des={...S.des,org:p.org||p.name,email:p.email||"",phone:p.phone||""}; try{ localStorage.setItem("ws.des",JSON.stringify(S.des)); }catch(err){ console.warn("[hub] des",err); } }
     if(k==="amb"&&p&&!(S.amb&&S.amb.name)){ S.amb={...S.amb,org:p.org||"",partner:p.org||p.name}; try{ localStorage.setItem("ws.amb",JSON.stringify(S.amb)); }catch(err){ console.warn("[hub] amb",err); } }
     S.view="tools"; S.toolApp=k; render(); window.scrollTo&&window.scrollTo({top:0,behavior:"smooth"}); return; }
+  const tb=e.target.closest("[data-hubtab]"); if(tb){ S.hubTab=tb.dataset.hubtab; if(S.pPanel&&S.hubTab!=="kit") S.pPanel=null; renderList(); return; }
   if(e.target.closest("[data-ccsave]")){ const p=S.partners.find(x=>x.id===S.hub); if(p) hubSaveContact(p); return; }
   if(e.target.closest("[data-hubfocus]")){ const i=document.querySelector(`#list [data-pnext]`); i&&(i.focus(),i.scrollIntoView({block:"center"})); }
 });
