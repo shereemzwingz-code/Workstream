@@ -1,0 +1,26 @@
+{
+  "name": "workstream",
+  "version": "1.0.0",
+  "description": "Mzw's personal command center for Dimension Energy community solar partnerships. Live page: https://claude.ai/code/artifact/bc9e35af-5864-44bd-9d9b-a3b86a363a28",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shereemzwingz-code/workstream.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shereemzwingz-code/workstream/issues"
+  },
+  "homepage": "https://github.com/shereemzwingz-code/workstream#readme",
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}

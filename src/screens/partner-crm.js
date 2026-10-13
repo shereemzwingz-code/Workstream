@@ -125,6 +125,7 @@ document.addEventListener("keydown",e=>{ if(S.view!=="partners") return;
 
 function partnersHTML(){
   if(!S.pLoaded) return `<div class="empty">Loading partners…</div>`;
+  if(S.hub){ const hp=S.partners.find(x=>x.id===S.hub); if(hp) return hubHTML(hp); S.hub=null; }
   const amb=S.pKind==="amb";
   const q=(S.pQ||"").trim().toLowerCase();
   let ps=q?S.partners.slice():pKindList();
@@ -175,7 +176,7 @@ $("list").addEventListener("click",async e=>{
   if(await deckAct(act,p,card)) return;
   if(await crmAct(act,a,p,card)) return;
   if(await panelAct(act,p,card)) return;
-  if(act==="toggle"){ S.pOpen=S.pOpen===p.id?null:p.id; S.pEdit=null; S.pPanel=null; S.pSSMenu=null; renderList(); return; }
+  if(act==="toggle"){ if(S.hub===p.id){ hubClose(); } else { hubOpen(p.id); } return; }
   if(act==="edit"){ S.pEdit=p.id; renderList(); return; }
   if(act==="save"){ const f=readPForm(a.closest(".pform")); if(!f.name) f.name=p.name; await pWrite(p.id,{...f,history:pHist(p,"Edited")},"💾 Saved"); S.pEdit=null; return; }
   if(act==="copy"){ const ok=await copyText((p.subject?`Subject: ${p.subject}\n\n`:"")+(p.body||"")); toast(ok?"📋 Email copied":"Couldn't copy. Press and hold the email text to copy it."); return; }
@@ -198,8 +199,7 @@ $("list").addEventListener("change",async e=>{
 });
 $("list").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches?.("[data-pupd]")){ e.preventDefault(); e.target.closest(".pcard").querySelector('[data-pact="log"]').click(); } });
 function gotoPartner(id){
-  S.view="partners"; S.pStage="all"; S.pOpen=id; S.pEdit=null; render();
-  requestAnimationFrame(()=>{ const el=document.querySelector(`.pcard[data-pid="${CSS.escape(id)}"]`); if(!el) return; el.scrollIntoView({behavior:"smooth",block:"center"}); });
+  S.pStage="all"; hubOpen(id);
 }
 document.addEventListener("click",e=>{ const g=e.target.closest("[data-gotop]"); if(g) gotoPartner(g.dataset.gotop); });
 

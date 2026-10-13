@@ -29,6 +29,7 @@
  "agents/pitch-deck-gamma.js",
  "agents/pitch-deck-canva.js",
  "screens/partner-crm.js",
+ "screens/partner-hub.js",
  "screens/cp-checkin.js",
  "agents/budget-builder.js",
  "agents/msa-builder.js",

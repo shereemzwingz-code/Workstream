@@ -33,6 +33,7 @@ function pKindHTML(){ const a=(S.partners||[]).filter(isAmb).length, n=(S.partne
   return `<div class="pkind" role="tablist" aria-label="Who to show"><button role="tab" type="button" data-pkind="partners" aria-selected="${S.pKind!=="amb"}">🤝 Partners<b>${n}</b></button><button role="tab" type="button" data-pkind="amb" aria-selected="${S.pKind==="amb"}">🦋 Ambassadors<b>${a}</b></button></div>`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pkind]"); if(!b) return; S.pKind=b.dataset.pkind; try{ localStorage.setItem("ws.pKind",S.pKind); }catch(_){} S.pStage="all"; S.pSS="all"; S.pOpen=null; S.pAdding=false; renderPBar(); renderList(); window.scrollTo&&window.scrollTo({top:0,behavior:"smooth"}); });
 function renderPBar(){
+  if(S.hub){ $("bar").innerHTML=""; if($("psw")) $("psw").innerHTML=""; return; }
   const KL=pKindList(), amb=S.pKind==="amb";
   const n=st=>KL.filter(p=>st==="all"||p.stage===st).length;
   const chip=(id,label)=>`<button class="count" data-pstage="${id}" aria-pressed="${S.pStage===id}"><b>${n(id)}</b> ${label}</button>`;
