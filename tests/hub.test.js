@@ -50,7 +50,7 @@ const dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true
   beforeParse(w) {
     w.claude = { use: async k => k === 'db' ? db : k === 'user' ? { id: async () => 'u1' } : k === 'mcp' ? Promise.reject(new Error('no mcp in test')) : null };
     w.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
-    w.CSS = { escape: s => String(s).replace(/[^a-zA-Z0-9_-]/g, c => "\\" + c) }; w.scrollTo = () => {}; w.HTMLElement.prototype.scrollIntoView = function () {};
+    w.TextEncoder = TextEncoder; w.CSS = { escape: s => String(s).replace(/[^a-zA-Z0-9_-]/g, c => "\\" + c) }; w.scrollTo = () => {}; w.HTMLElement.prototype.scrollIntoView = function () {};
     w.requestAnimationFrame = f => setTimeout(f, 0);
   } });
 const w = dom.window, $ = s => w.document.querySelector(s), list = () => $('#list').textContent;
@@ -125,6 +125,37 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   ok(w.eval('S.hub') === 'p_test', 'Back from the list returns to the hub you came from');
   $('#navBack').click(); await wait(30); $('#navBack').click(); await wait(30);
   ok(w.eval('S.view') === 'home', 'Back walks all the way to Home');
+  // 9. contact card
+  w.eval('hubOpen("p_test")'); await wait(50);
+  const cc = $('.ccard'); ok(cc, 'hub opens with a contact card');
+  ok(cc.textContent.includes('Dana Test') && $('.ccav').textContent === 'DT', 'card shows name and initials avatar');
+  ok(cc.querySelector('a[href="tel:3125550100"]') && cc.querySelector('a[href="sms:3125550100"]') && cc.querySelector('a[href="mailto:dana@example.org"]'), 'Call / Text / Email are one tap');
+  let saved = null; w.eval('S.dl={save:async o=>{ window.__saved=o; }}');
+  $('[data-ccsave]').click(); await wait(30); saved = w.__saved;
+  const vcf = saved && Buffer.from(saved.data).toString();
+  ok(saved && saved.filename === 'Dana_Test.vcf' && /FN:Dana Test/.test(vcf) && /TEL;TYPE=WORK,VOICE:312-555-0100/.test(vcf) && /ORG:Sunrise Community Center \(TEST\)/.test(vcf), 'Save makes a phone contact file (.vcf)');
+  w.eval('hubOpen("p_other")'); await wait(30);
+  ok($('.ccard a.off') && $('.ccard').textContent.includes('+ Add phone'), 'missing phone shows "+ Add phone" and greys out Call/Text');
+  // 10. one-tap badge — add a designee, then the whole chain runs (Canva/email stubbed in this test)
+  w.eval('hubOpen("p_test")'); await wait(30);
+  ok([...w.document.querySelectorAll('[data-btgo]')].some(b => b.textContent.includes('Make badge')), 'each needed badge has a one-tap "Make badge" button');
+  w.eval(`S.mcp={}; window.__calls=[];
+    badgeCanva=async bd=>{ __calls.push("canva"); await bgcol().doc(bd.id).update({canvaId:"C1",canvaUrl:"https://canva.com/C1",agentId:11}); return "u"; };
+    mailImages=async (t,k)=>{ __calls.push("mail:"+k); return k==="photo"?[{uri:"m1",name:"Casey Lane headshot.jpg",mime:"image/jpeg"},{uri:"m2",name:"group.jpg",mime:"image/jpeg"}]:[{uri:"m3",name:"logo.png",mime:"image/png"}]; };
+    badgeAddImage=async (bd,k,f)=>{ __calls.push("add:"+k+":"+f.uri); await bgcol().doc(bd.id).update({[k+"Asset"]:"A_"+k}); };
+    badgePng=async bd=>{ __calls.push("png"); await bgcol().doc(bd.id).update({status:"Made"}); };`);
+  $('[data-btname]').value = 'Casey Lane'; $('[data-btadd]').click(); await wait(400);
+  const casey = [...db.docs.entries()].find(([k, v]) => k.startsWith(U + '/badges/items/') && v.name === 'Casey Lane');
+  ok(casey && casey[1].pid === 'p_test', 'designee added as a badge tied to this partner');
+  ok(casey[1].canvaId === 'C1' && casey[1].photoAsset === 'A_photo' && casey[1].logoAsset === 'A_logo' && casey[1].status === 'Made', 'one tap ran Canva → photo → logo → PNG: ' + w.__calls.join(','));
+  ok(w.__calls.includes('add:photo:m1'), 'picked the headshot whose file name matches the person');
+  ok(db.docs.get(U + '/partners/items/p_test').history.some(h => h.text.includes('Casey Lane')), 'designee written to the partner timeline');
+  await wait(100);
+  ok(list().includes('Ready to print on the Badgy'), 'says it is ready to print');
+  // ambiguous photo → stops and asks, never guesses
+  w.eval(`mailImages=async (t,k)=>[{uri:"x1",name:"IMG_001.jpg"},{uri:"x2",name:"IMG_002.jpg"}]; __calls=[];`);
+  $('[data-btgo]').click(); await wait(300);
+  ok(/Found 2 possible photos/.test(list()) && $('[data-btpick]') && !w.__calls.some(c => c.startsWith('add:')), 'two unclear photos → stops and shows Pick, places nothing');
   ok(errors.length === 0, 'no page errors: ' + errors.join(' | '));
   console.log(`PASS partner hub: ${pass} checks`); process.exit(0);
 })().catch(e => { console.error('FAIL', e.message, errors.slice(0, 3)); process.exit(1); });

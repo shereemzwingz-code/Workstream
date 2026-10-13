@@ -26,6 +26,23 @@ S.hub=null;
 .hsteps i.on{background:var(--s-c);color:var(--s-c-t);border-color:transparent}
 .hempty{font-size:13.5px;color:var(--muted)}
 .hlink{overflow-wrap:anywhere;font-size:13px}
+.hub .crmcols>.crmbox:first-child{display:none}
+.ccard{margin:14px 14px 0;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px;box-shadow:var(--shadow)}
+.cchead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.ccav{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:22px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--head2,#5A1E8C));flex:none}
+.ccid{flex:1;min-width:180px;display:grid;gap:2px}
+.ccid b{font-size:20px;line-height:1.2}
+.ccid span{font-size:14px;color:var(--muted)}
+.ccacts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ccacts a,.ccacts button{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:60px;justify-content:center;border:1px solid var(--line);background:var(--bg);border-radius:14px;color:var(--ink);text-decoration:none;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.ccacts a span,.ccacts button span{font-size:20px;line-height:1}
+.ccacts .off{opacity:.4;pointer-events:none}
+.cclines{display:grid;gap:0;border-top:1px solid var(--line)}
+.ccl{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.ccl:last-child{border-bottom:0}
+.ccl .k{width:92px;flex:none;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ccl .v{flex:1;min-width:0;overflow-wrap:anywhere}
+.ccl .add{color:var(--accent);font-weight:700;background:none;border:0;padding:0;font:inherit;cursor:pointer}
 </style>`); }catch(err){ console.warn("[hub] style",err); } })();
 
 // Does free text (a title, org, name) belong to this partner?
@@ -41,7 +58,7 @@ function hubKeys(p){
 function hubMatch(p,...texts){ const hay=texts.map(x=>String(x||"").toLowerCase()).join(" | "); if(!hay.trim()) return false; return hubKeys(p).some(k=>hay.includes(k)); }
 
 function hubOutbox(p){ return (S.outbox||[]).filter(x=>x.pid===p.id||(!x.pid&&hubMatch(p,x.title,x.name,x.to&&x.to===p.email?p.org:""))); }
-function hubBadges(p){ return (S.badges||[]).filter(b=>hubMatch(p,b.org)); }
+function hubBadges(p){ return (S.badges||[]).filter(b=>b.pid===p.id||hubMatch(p,b.org)); }
 function hubLinks(p){
   const out=[]; const add=(label,url)=>{ if(url&&/^https?:/i.test(url)&&!out.some(o=>o.url===url)) out.push({label,url}); };
   add("Pitch deck",p.deckUrl); add("Deck",typeof p.deck==="string"?p.deck:""); add("UTM link",p.utmLink); add("Flyer",p.flyerUrl||p.flyerLink);
@@ -62,19 +79,36 @@ function hubNext(p){
   if(late.length) n.push({hot:1,t:`${late.length} overdue task${late.length>1?"s":""}`,w:late.map(t=>t.title).slice(0,2).join(" · "),b:`<button class="pbtn" data-goto="${esc(late[0].id)}">Open task</button>`});
   if(p.needsKit&&typeof kitLeft==="function"&&kitLeft(p)>0) n.push({t:`Finish the kit — ${kitLeft(p)} left`,w:"Slide, MSA and budget for this partner",b:`<button class="pbtn" data-pact="kitopen">📁 Open kit</button>`});
   const needBadge=hubBadges(p).filter(b=>b.status!=="Made");
-  if(needBadge.length) n.push({t:`${needBadge.length} badge${needBadge.length>1?"s":""} still needed`,w:needBadge.map(b=>b.name).join(", "),b:`<button class="pbtn" data-hubgo="badges">🪪 Badges</button>`});
+  if(needBadge.length) n.push({t:`${needBadge.length} badge${needBadge.length>1?"s":""} still needed`,w:needBadge.map(b=>b.name).join(", "),b:`<button class="pbtn main" data-btgo="${esc(needBadge[0].id)}">🪪 Make badge</button>`});
   if(!String(p.nextStep||"").trim()) n.push({t:"Set a next step",w:"Every partner should have one concrete action",b:`<button class="pbtn" data-hubfocus="next">Set it</button>`});
   return n.slice(0,3);
 }
 
+function vcardOf(p){ const e=v=>String(v||"").replace(/[\;,]/g,m=>"\\"+m).replace(/\n/g,"\\n"); const nm=String(p.name||p.org||"").trim(); const parts=nm.split(/\s+/);
+  return ["BEGIN:VCARD","VERSION:3.0",`N:${e(parts.slice(1).join(" "))};${e(parts[0]||"")};;;`,`FN:${e(nm)}`,p.org?`ORG:${e(p.org)}`:"",p.role?`TITLE:${e(p.role)}`:"",p.phone?`TEL;TYPE=WORK,VOICE:${e(p.phone)}`:"",p.email?`EMAIL;TYPE=WORK:${e(p.email)}`:"",`NOTE:${e(["Partner via Dimension Energy",p.source?"Source: "+p.source:"",p.summary||""].filter(Boolean).join(" — "))}`,"END:VCARD"].filter(Boolean).join("\r\n"); }
+async function hubSaveContact(p){ const vcf=vcardOf(p), file=String(p.name||p.org||"contact").replace(/[^\w]+/g,"_")+".vcf";
+  try{ if(S.dl){ await S.dl.save({filename:file,data:new TextEncoder().encode(vcf)}); toast("📇 Contact saved — open the file to add it to your phone"); return; } }catch(err){ if(err&&err.code==="cancelled") return; console.warn("[contact] save",err); }
+  const a=document.createElement("a"); a.href="data:text/vcard;charset=utf-8,"+encodeURIComponent(vcf); a.download=file; document.body.appendChild(a); a.click(); a.remove(); toast("📇 Contact file downloaded"); }
+function hubContactHTML(p){ const nm=p.name&&p.name!==p.org?p.name:"", org=p.org||p.name||"", tel=String(p.phone||"").replace(/[^\d+]/g,"");
+  const act=(href,ic,l,on)=>on?`<a href="${esc(href)}" target="_blank" rel="noopener"><span aria-hidden="true">${ic}</span>${l}</a>`:`<a class="off" aria-disabled="true"><span aria-hidden="true">${ic}</span>${l}</a>`;
+  const line=(k,v,copy,missing)=>`<div class="ccl"><span class="k">${k}</span><span class="v">${v?esc(v):`<button class="add" data-pact="edit">+ Add ${missing||k.toLowerCase()}</button>`}</span>${v&&copy?`<button class="mini" data-pcopy="${esc(v)}">Copy</button>`:""}</div>`;
+  return `<section class="ccard" aria-label="Contact card">
+    <div class="cchead"><div class="ccav" aria-hidden="true">${esc(initials(nm||org))}</div>
+      <div class="ccid"><b>${esc(nm||org)}</b>${p.role?`<span>${esc(p.role)}</span>`:""}${nm?`<span>${esc(org)}</span>`:""}</div>
+      <button class="mini" data-pact="edit">✏️ Edit</button></div>
+    <div class="ccacts">${act("tel:"+tel,"📞","Call",!!tel)}${act("sms:"+tel,"💬","Text",!!tel)}${act("mailto:"+(p.email||""),"✉️","Email",!!p.email)}<button type="button" data-ccsave><span aria-hidden="true">📇</span>Save</button></div>
+    <div class="cclines">${line("Phone",p.phone,true)}${line("Email",p.email,true)}${p.source?line("Met at",p.source):""}${(p.owner||p.owner2)?line("DRE lead",[p.owner,p.owner2].filter(Boolean).join(" · ")):""}${p.reach?line("LMI reach",p.reach):""}</div>
+    ${p.summary?`<div style="font-size:14px">${esc(p.summary)}</div>`:""}
+    ${p.notes?`<details><summary class="crmk" style="cursor:var(--cur-pointer);margin:0">Notes</summary><div style="white-space:pre-line;font-size:13.5px;margin-top:6px">${esc(p.notes)}</div></details>`:""}
+  </section>`; }
 function hubHTML(p){
   const org=p.org||p.name; const ed=S.pEdit===p.id; const nx=hubNext(p);
   const ob=hubOutbox(p), bd=hubBadges(p), ln=hubLinks(p);
   const desHere=S.des&&S.des.org&&hubMatch(p,S.des.org), ambHere=S.amb&&S.amb.name&&hubMatch(p,S.amb.org,S.amb.partner);
-  const BSTEPS=[["Needed","Needed"],["Made","Built"]];
   return `<div class="hub">
   <div class="hubtop"><button class="pbtn" data-hubback>← All partners</button><span class="crumb">Partners › ${esc(org)}</span></div>
   <div class="pcard${p.tier===TIERS[0]?" prio":""}" data-pid="${esc(p.id)}" style="--sc:${ssVar(p)};--pc2:${priVar(priOf(p))}">
+    ${hubContactHTML(p)}
     <div class="hubnext"><h4>✨ Do next</h4>${nx.length?nx.map(x=>`<div class="hnx${x.hot?" hot":""}"><div class="why"><b>${esc(x.t)}</b><span>${esc(x.w)}</span></div>${x.b}</div>`).join(""):`<div class="hempty">Nothing waiting on you for this partner. 💗</div>`}</div>
     <div class="pdetail" style="border-top:0">${ed?pFormHTML(p,false):crmHTML(p)}</div>
     <div class="hubgrid">
@@ -82,7 +116,8 @@ function hubHTML(p){
         ${ob.length?ob.map(x=>`<div class="hrow"><span class="t">${esc(x.title||x.subject||"Draft")}<small>${x.status==="approved"?"✅ In your Outlook Drafts":"Waiting for your OK"} · ${esc(fmtShort(x.at))}</small></span><button class="mini" data-hubob="${esc(x.id)}">Open</button></div>`).join(""):`<div class="hempty">No drafts for this partner. Tap ✍️ Draft follow-up above to make one.</div>`}
       </div>
       <div class="hubbox"><h4>🪪 People &amp; badges <span>${bd.length}</span></h4>
-        ${bd.length?bd.map(b=>`<div class="hrow"><span class="t">${esc(b.name)}<small>Designee badge</small></span><span class="hsteps">${BSTEPS.map(([k,l],i)=>`<i class="${(b.status==="Made"||i===0)?"on":""}">${l}</i>`).join("")}</span>${b.canvaUrl?`<a class="mini" href="${esc(b.canvaUrl)}" target="_blank" rel="noopener">Canva</a>`:""}</div>`).join(""):`<div class="hempty">No designees or badges yet.</div>`}
+        ${bd.length?bd.map(btRowHTML).join(""):`<div class="hempty">No designees or badges yet.</div>`}
+        <div class="nextbox"><input data-btname placeholder="Designee's full name" aria-label="Designee's full name"><button class="pbtn" data-btadd>🪪 Add + make badge</button></div>
         ${desHere?`<div class="hrow"><span class="t">Designee in progress<small>${esc(S.des.name||S.des.org)}</small></span><button class="mini" data-hubgo="des">Continue</button></div>`:""}
         ${ambHere?`<div class="hrow"><span class="t">Ambassador in progress<small>${esc(S.amb.name)}</small></span><button class="mini" data-hubgo="amb">Continue</button></div>`:""}
         <div class="pbtns"><button class="pbtn" data-hubgo="des">➕ Designee</button><button class="pbtn" data-hubgo="amb">➕ Ambassador</button></div>
@@ -107,6 +142,7 @@ document.addEventListener("click",e=>{
     if(k==="des"&&p&&!(S.des&&S.des.org)){ S.des={...S.des,org:p.org||p.name,email:p.email||"",phone:p.phone||""}; try{ localStorage.setItem("ws.des",JSON.stringify(S.des)); }catch(err){ console.warn("[hub] des",err); } }
     if(k==="amb"&&p&&!(S.amb&&S.amb.name)){ S.amb={...S.amb,org:p.org||"",partner:p.org||p.name}; try{ localStorage.setItem("ws.amb",JSON.stringify(S.amb)); }catch(err){ console.warn("[hub] amb",err); } }
     S.view="tools"; S.toolApp=k; render(); window.scrollTo&&window.scrollTo({top:0,behavior:"smooth"}); return; }
+  if(e.target.closest("[data-ccsave]")){ const p=S.partners.find(x=>x.id===S.hub); if(p) hubSaveContact(p); return; }
   if(e.target.closest("[data-hubfocus]")){ const i=document.querySelector(`#list [data-pnext]`); i&&(i.focus(),i.scrollIntoView({block:"center"})); }
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.view==="partners"&&S.hub&&!["INPUT","TEXTAREA","SELECT"].includes((e.target.tagName||"").toUpperCase())) hubClose(); });

@@ -18,6 +18,7 @@
  "screens/designee-onboarding.js",
  "agents/badges-canva.js",
  "agents/link-flyer.js",
+ "agents/badge-onetap.js",
  "screens/testing.js",
  "agents/badge-preview-email.js",
  "screens/command-k.js",
