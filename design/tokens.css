@@ -18,3 +18,21 @@
   --shadow:none; /* depth comes from 1px borders + one-step lighter surfaces */
   --tap:44px;
 }
+
+/* App icons — Mzw's "girly" set: each app gets its own candy gradient chip, white line icon, soft glow. */
+:root{
+  --app-pink:linear-gradient(135deg,#FF9AD5,#F05AA6);   /* Outbox, Home, Queue bell */
+  --app-lilac:linear-gradient(135deg,#C9A7FF,#8B5CF6);  /* Pitch Decks, Tasks */
+  --app-peach:linear-gradient(135deg,#FFC2A6,#FF7E9D);  /* Badges, Partners */
+  --app-berry:linear-gradient(135deg,#F05AA6,#B0127A);  /* Budget */
+  --app-plum:linear-gradient(135deg,#B98BFF,#6A3FD6);   /* MSA, Activity */
+  --app-rose:linear-gradient(135deg,#FFB3C7,#E5578E);   /* Flyers */
+  --app-orchid:linear-gradient(135deg,#E59CFF,#B44BE1); /* UTM Builder, Tools */
+  --app-lav:linear-gradient(135deg,#B9C2FF,#7C6CF2);    /* Testing */
+  --app-coral:linear-gradient(135deg,#FFA88A,#F0567A);  /* Ambassadors */
+  --app-mauve:linear-gradient(135deg,#D9A0D9,#9C4F96);  /* Partner Intake */
+  --app-fuchsia:linear-gradient(135deg,#FF7AD9,#D6249F);/* Gift Cards */
+  --app-bubble:linear-gradient(135deg,#FFC1E3,#FF6FB5); /* ABP, Ask */
+  --app-glow:0 8px 20px rgba(240,90,166,.38);
+  --r-app:20px; /* app tiles only */
+}
