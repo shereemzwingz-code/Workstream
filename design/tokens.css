@@ -1,0 +1,20 @@
+/* Workstream 2.0 tokens — from Reference 1 (CRAVEAT). Dark is the main theme; light uses the same names. */
+:root,[data-theme="dark"]{
+  --bg:#130A24; --surface:#1D1235; --surface2:#271846; --line:#382659; --chip:#2E1D52;
+  --ink:#F5EFFC; --muted:#B5A6CE; --accent:#F05AA6; --violet:#9B6BFF; --onaccent:#1A0716;
+  --ok:#3DD68C; --info:#5AA9FF; --warn:#FFA94D; --bad:#FF7A7A;
+  --data-grad:linear-gradient(135deg,#9B6BFF,#F05AA6); /* charts and rings only, never whole cards */
+}
+[data-theme="light"]{
+  --bg:#F6F2FC; --surface:#FFFFFF; --surface2:#F1EAFA; --line:#E3D8F1; --chip:#EFE6FB;
+  --ink:#1D1330; --muted:#5F5276; --accent:#C2307C; --violet:#6A3FD6; --onaccent:#FFFFFF;
+  --ok:#17834F; --info:#1F67C2; --warn:#B25E00; --bad:#C0362C;
+}
+:root{
+  --font:"Plus Jakarta Sans",system-ui,sans-serif;
+  /* 6 type sizes */ --t-xs:12px; --t-sm:13px; --t-md:15px; --t-lg:18px; --t-xl:24px; --t-2xl:32px;
+  /* 3 radii */ --r-sm:8px; --r-md:14px; --r-pill:999px;
+  /* 4px spacing */ --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px;
+  --shadow:none; /* depth comes from 1px borders + one-step lighter surfaces */
+  --tap:44px;
+}
