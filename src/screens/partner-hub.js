@@ -46,8 +46,8 @@ function hubLinks(p){
   const out=[]; const add=(label,url)=>{ if(url&&/^https?:/i.test(url)&&!out.some(o=>o.url===url)) out.push({label,url}); };
   add("Pitch deck",p.deckUrl); add("Deck",typeof p.deck==="string"?p.deck:""); add("UTM link",p.utmLink); add("Flyer",p.flyerUrl||p.flyerLink);
   add("Budget",typeof p.budget==="string"?p.budget:(p.budget&&p.budget.url)); add("MSA",typeof p.msa==="string"?p.msa:(p.msa&&p.msa.url));
-  (S.utm||[]).filter(u=>hubMatch(p,u.who,u.name,u.partner,u.label,u.campaign)).forEach(u=>add("UTM · "+(u.who||u.name||u.campaign||"link"),u.link));
-  (S.links||[]).filter(l=>hubMatch(p,l.label,l.partner,l.note)).forEach(l=>add(l.label||"Link",l.url));
+  (S.utm||[]).filter(u=>u.pid===p.id||u.link===p.utmLink||hubMatch(p,u.material,u.where)).forEach(u=>add("UTM · "+(u.material||u.camp||"link"),u.link));
+  (S.links||[]).filter(l=>l.pid===p.id||hubMatch(p,l.label,l.partner)).forEach(l=>add(l.label||"Link",l.url));
   return out;
 }
 
@@ -89,7 +89,7 @@ function hubHTML(p){
       </div>
       <div class="hubbox"><h4>🔗 Links &amp; files <span>${ln.length}</span></h4>
         ${ln.length?ln.map(l=>`<div class="hrow"><span class="t">${esc(l.label)}<small class="hlink">${esc(l.url)}</small></span><a class="mini" href="${esc(l.url)}" target="_blank" rel="noopener">Open</a><button class="mini" data-pcopy="${esc(l.url)}">Copy</button></div>`).join(""):`<div class="hempty">No links yet. Deck, UTM, flyer, budget and MSA links show here once made.</div>`}
-        <div class="pbtns"><button class="pbtn" data-hubgo="utm">🔗 Make a UTM link</button></div>
+        ${lfHTML(p)}
       </div>
     </div>
   </div></div>`;

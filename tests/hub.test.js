@@ -90,6 +90,26 @@ let pass = 0; const ok = (c, m) => { assert(c, m); pass++; };
   w.eval('hubOpen("p_test")'); await wait(50);
   $('[data-hubback]').click(); await wait(50);
   ok(w.eval('S.hub') === null && list().includes('Riverside Library'), 'Back returns to the full partner list');
+  // 7. one tap: tracked link (+ QR + flyer when Canva is allowed), all logged
+  w.eval('hubOpen("p_test")'); await wait(50);
+  ok(list().includes('Make link + QR + flyer'), 'hub offers the one-tap link + QR + flyer');
+  $('[data-lfbase]').value = 'ampion.net';  $('[data-lfproj]').value = 'Sunrise';
+  $('[data-lfgo]').click(); await wait(100);
+  ok(/no project page/.test(list()), 'a homepage-only enrollment URL is refused with a plain reason');
+  $('[data-lfbase]').value = 'https://ampion.net/sunrise'; $('[data-lfgo]').click(); await wait(300);
+  const P = db.docs.get(U + '/partners/items/p_test');
+  ok(/utm_source=sunrise_community_center&utm_medium=community_partner&utm_campaign=partner_outreach_sunrise/.test(P.utmLink || ''), 'tracked link saved on the partner: ' + P.utmLink);
+  ok([...db.docs.entries()].some(([k, v]) => k.startsWith(U + '/utm/items/') && v.link === P.utmLink && v.pid === 'p_test'), 'tracked link saved to the UTM log, tied to the partner');
+  ok(P.history.some(h => h.text.startsWith('🔗 Tracked link made')), 'tracked link written to the partner timeline');
+  ok(/needs Canva and Google Drive allowed/.test(list()), 'without Canva it says exactly what to allow (status survives the re-render)');
+  ok(list().includes('UTM link') && list().includes('partner_outreach_sunrise'), 'the new link shows in Links & files');
+  // a finished flyer (from any tool) lands in the Link Log and the timeline, once
+  await w.eval('lfLogFlyer(S.partners.find(x=>x.id==="p_test"),"https://www.canva.com/design/FLYER1/edit")'); await wait(100);
+  await w.eval('lfLogFlyer(S.partners.find(x=>x.id==="p_test"),"https://www.canva.com/design/FLYER1/edit")'); await wait(100);
+  const flyerRows = [...db.docs.entries()].filter(([k, v]) => k.startsWith(U + '/links/items/') && v.url.includes('FLYER1'));
+  ok(flyerRows.length === 1 && flyerRows[0][1].pid === 'p_test', 'flyer saved to the Link Log exactly once, tied to the partner');
+  ok(db.docs.get(U + '/partners/items/p_test').history.filter(h => h.text.includes('FLYER1')).length === 1, 'flyer written to the timeline exactly once');
+  ok(list().includes('Flyer — Sunrise Community Center (TEST)'), 'flyer shows in the hub Links & files');
   ok(errors.length === 0, 'no page errors: ' + errors.join(' | '));
   console.log(`PASS partner hub: ${pass} checks`); process.exit(0);
 })().catch(e => { console.error('FAIL', e.message, errors.slice(0, 3)); process.exit(1); });
