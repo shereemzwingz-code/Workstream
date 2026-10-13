@@ -144,8 +144,3 @@ function kSchedule(){ clearTimeout(KITTY.timer); KITTY.timer=setTimeout(()=>kSho
   $("ksnooze").addEventListener("click",()=>{ kSet("ws.kittyOff",ymd(new Date())); kHide(); toast("Kitty will nap until tomorrow 😴 — Tools › Kitty brings her back"); });
   clearTimeout(KITTY.timer); KITTY.timer=setTimeout(()=>kShow(false),45000);
 })();
-</script>
-</body>
-</html>
-
-</body></html>

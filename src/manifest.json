@@ -43,5 +43,7 @@
  "screens/msa-tab.js",
  "screens/abp.js",
  "screens/find-and-save.js",
- "screens/kitty-sparkle.js"
+ "screens/kitty-sparkle.js",
+ "screens/nav-back.js",
+ "shell/page-close.html"
 ]

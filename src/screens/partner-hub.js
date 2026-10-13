@@ -96,7 +96,7 @@ function hubHTML(p){
 }
 
 function hubOpen(id){ S.view="partners"; S.hub=id; S.pOpen=id; S.pEdit=null; S.pPanel=null; S.pSSMenu=null; render(); window.scrollTo&&window.scrollTo({top:0,behavior:"smooth"}); }
-function hubClose(){ const id=S.hub; S.hub=null; S.pOpen=null; S.pEdit=null; S.pPanel=null; renderList(); renderBar();
+function hubClose(){ const id=S.hub; S.hub=null; S.pOpen=null; S.pEdit=null; S.pPanel=null; render();
   requestAnimationFrame(()=>{ const el=id&&document.querySelector(`.pcard[data-pid="${CSS.escape(id)}"]`); el&&el.scrollIntoView({block:"center"}); }); }
 document.addEventListener("click",e=>{
   if(S.view!=="partners"||!S.hub) return;
