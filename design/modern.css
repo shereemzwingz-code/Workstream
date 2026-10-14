@@ -98,3 +98,25 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .pipe button{flex:0 0 118px}
   .hero h2{font-size:22px}
 }
+
+/* ---------- Dark mode polish: deeper header, no glaring light buttons, readable disabled text ---------- */
+:root{--dk-head:linear-gradient(140deg,#3B1366 0%,#4E1A80 55%,#7A1E6C 100%);--dk-pill-bg:#FFE3F1;--dk-pill-ink:#7A1449;--dk-pill-line:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--dk-head:linear-gradient(140deg,#24093F 0%,#3A0F5C 55%,#5A1450 100%);--dk-pill-bg:rgba(240,90,166,.16);--dk-pill-ink:#FFB3D6;--dk-pill-line:rgba(240,90,166,.45);--dk-on:1}}
+:root[data-theme="dark"]{--dk-head:linear-gradient(140deg,#24093F 0%,#3A0F5C 55%,#5A1450 100%);--dk-pill-bg:rgba(240,90,166,.16);--dk-pill-ink:#FFB3D6;--dk-pill-line:rgba(240,90,166,.45);--dk-on:1}
+header{background:var(--dk-head)}
+.donebtn,.cpy{background:var(--dk-pill-bg);color:var(--dk-pill-ink);border-color:var(--dk-pill-line)}
+.go:disabled{color:var(--accent-ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .go:disabled{color:#FFD9E9;opacity:.5}
+  :root:not([data-theme="light"]) .upd{background:rgba(30,19,41,.92)}
+  :root:not([data-theme="light"]) .upd label{color:#E8C9F2}
+  :root:not([data-theme="light"]) .upd textarea{background:#140B1D;border-color:#3A2850;color:#F3EAF7}
+  :root:not([data-theme="light"]) .kmood{background:rgba(240,90,166,.18);color:#FFB3D6}
+  :root:not([data-theme="light"]) .micnote{background:rgba(240,90,166,.16);color:#FFB3D6}}
+:root[data-theme="dark"] .go:disabled{color:#FFD9E9;opacity:.5}
+:root[data-theme="dark"] .upd{background:rgba(30,19,41,.92)}
+:root[data-theme="dark"] .upd label{color:#E8C9F2}
+:root[data-theme="dark"] .upd textarea{background:#140B1D;border-color:#3A2850;color:#F3EAF7}
+:root[data-theme="dark"] .kmood{background:rgba(240,90,166,.18);color:#FFB3D6}
+:root[data-theme="dark"] .micnote{background:rgba(240,90,166,.16);color:#FFB3D6}
+/* the original shine layer replaces background-image, so give buttons a solid pink base underneath */
+.go,.pbtn.main,.rnfab{background-color:#E8479B!important;color:#fff}
