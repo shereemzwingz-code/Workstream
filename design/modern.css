@@ -1,0 +1,57 @@
+/* ---------- Modern finish (Oct 13 2026): same screens, same colors, cleaner surfaces ----------
+   Only looks change: softer page, rounder cards with soft shadows instead of hard borders,
+   pill buttons and chips, calmer type. No layout or behavior changes. */
+:root{--bg:#F6F2F9;--line:#ECE3F1;--surface:#FFFFFF;
+  --shadow:0 1px 2px rgba(59,19,102,.05),0 8px 24px rgba(59,19,102,.07);
+  --shadow-lift:0 2px 4px rgba(59,19,102,.06),0 14px 34px rgba(59,19,102,.12);
+  --r-lg:20px;--r-md:14px;--r-sm:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#140B1D;--line:#2E2140;--surface:#1E1329;--shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.35);--shadow-lift:0 2px 4px rgba(0,0,0,.4),0 16px 36px rgba(0,0,0,.45)}}
+:root[data-theme="dark"]{--bg:#140B1D;--line:#2E2140;--surface:#1E1329;--shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.35);--shadow-lift:0 2px 4px rgba(0,0,0,.4),0 16px 36px rgba(0,0,0,.45)}
+body{letter-spacing:-.005em}
+
+/* header: same purple, smoother blend, rounded base */
+header{background:linear-gradient(140deg,#3B1366 0%,#4E1A80 55%,#7A1E6C 100%);border-radius:0 0 28px 28px;padding-block:24px 26px;box-shadow:0 10px 30px rgba(59,19,102,.22)}
+h1{letter-spacing:-.03em}
+.hbtn{border:0;background:rgba(255,255,255,.14);border-radius:999px;padding:8px 14px;font-weight:600;backdrop-filter:blur(6px);transition:background .15s}
+.hbtn:hover{background:rgba(255,255,255,.24);border-color:transparent}
+.upd{border-radius:var(--r-lg);box-shadow:0 12px 32px rgba(20,4,40,.22)}
+.upd textarea{border:1.5px solid #EADCF1;border-radius:var(--r-md);background:#FBF8FC}
+.go,.mic,.stop{border-radius:999px}
+.go{background:linear-gradient(135deg,#F05AA6,#E8479B);box-shadow:0 6px 16px rgba(232,71,155,.28)}
+
+/* cards: soft shadow instead of hard outline */
+.sec,.pcard,.cal,.result,.dncard,.gcard,.cpsec,.cpbar,.bqcard,.hcard,.meet,.rnpanel{border-color:transparent!important;border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.pcard,.dncard{border-left-width:0!important;position:relative;overflow:hidden}
+.pcard::before,.dncard::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;background:var(--pc,var(--c,var(--line)))}
+.pcard:hover,.dncard:hover{box-shadow:var(--shadow-lift)}
+.sec{overflow:hidden}
+.sechead{box-shadow:none!important;border-bottom:1px solid var(--line)}
+.sechead::before{content:"";width:10px;height:10px;border-radius:999px;background:var(--ch);flex:none}
+.task{border-bottom-color:var(--line)}
+.task:hover{background:color-mix(in srgb,var(--tint) 55%,var(--surface))}
+
+/* chips, pills, buttons */
+.count,.seg,.bar select{border-radius:999px;border-color:var(--line);background:var(--surface);box-shadow:0 1px 2px rgba(59,19,102,.04)}
+.count,.seg button{text-transform:none;letter-spacing:0;font-size:13px;font-weight:600}
+.count[aria-pressed="true"],.hzt[aria-pressed="true"]{box-shadow:0 6px 16px rgba(59,19,102,.22)}
+.pbtn,.editbtn,.donebtn,.linkbtn,.mini{border-radius:999px}
+.pbtn{border-color:var(--line);background:var(--surface)}
+.pbtn.main{background:linear-gradient(135deg,#F05AA6,#E8479B);border-color:transparent;box-shadow:0 6px 16px rgba(232,71,155,.25)}
+.pill,.chip{border-radius:999px}
+.hzt{border-color:transparent;border-radius:var(--r-md);box-shadow:var(--shadow)}
+
+/* app tiles */
+.vt .vi{border-radius:20px;box-shadow:0 8px 20px rgba(59,19,102,.16),inset 0 1px 0 rgba(255,255,255,.4)}
+.vt:hover .vi{transform:translateY(-3px)}
+
+/* inputs */
+.pform input,.pform select,.pform textarea,.edit input,.edit select,.edit textarea,.bqgrid input,.bqgrid select,.cpaskline input{border-radius:var(--r-sm);border:1.5px solid var(--line)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-color:var(--accent)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+
+/* floating bits */
+.rnfab{background:linear-gradient(135deg,#F05AA6,#E8479B);box-shadow:0 10px 26px rgba(232,71,155,.35)}
+.toast{border-radius:999px;box-shadow:var(--shadow-lift)}
+.calhead{background:linear-gradient(140deg,#3B1366,#5A1E8C)}
+.calhead button{border:0;background:rgba(255,255,255,.16);border-radius:999px}
+.day.today .num{box-shadow:0 4px 10px rgba(232,71,155,.35)}
+@media (prefers-reduced-motion:reduce){.hbtn,.vt .vi{transition:none}}
