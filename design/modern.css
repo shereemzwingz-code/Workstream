@@ -55,3 +55,46 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .calhead button{border:0;background:rgba(255,255,255,.16);border-radius:999px}
 .day.today .num{box-shadow:0 4px 10px rgba(232,71,155,.35)}
 @media (prefers-reduced-motion:reduce){.hbtn,.vt .vi{transition:none}}
+
+/* ---------- Round 2: tighter header on phones, calmer assistant box, sticky glass nav ---------- */
+.logo{border-radius:14px}
+.upd{background:rgba(255,255,255,.96)}
+.upd label{font-size:13px;color:#5A1E8C}
+.upd textarea{min-height:46px!important;resize:none;line-height:1.4}
+.mic{border-width:1.5px;background:transparent}
+.go:disabled{opacity:.45;box-shadow:none}
+.hfloat{opacity:.5}
+@media (max-width:899px){
+  header{padding-block:14px 16px;border-radius:0 0 22px 22px}
+  .toprow{gap:10px}
+  .brand .logo{width:40px;height:40px;font-size:20px}
+  h1{font-size:22px}
+  .date{font-size:12.5px;margin-top:2px}
+  /* header shortcuts: one swipeable row of small pills instead of two big rows */
+  .hbtns{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;width:100%;margin-inline:-16px;padding-inline:16px;gap:6px}
+  .hbtns::-webkit-scrollbar{display:none}
+  .hbtn{flex:none;padding:7px 12px;font-size:13px}
+  /* assistant: one line with Talk / Do it beside it */
+  .upd{margin-top:12px;padding:10px;border-radius:18px}
+  .upd label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .upd textarea{min-height:42px!important;height:42px;padding:10px 12px;font-size:14px}
+  .updbar{margin-top:8px;gap:8px}
+  .go,.mic{height:36px;font-size:13px;padding-inline:14px}
+}
+/* section switcher row stays reachable while you scroll */
+.views{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border-radius:0 0 18px 18px}
+/* calmer labels */
+.donow h2,.barlbl,.hzt span,.thead{letter-spacing:.06em;font-weight:700}
+.dncard .why{font-size:11px}
+.dncard .t{font-weight:700}
+
+/* ---------- Round 3: no empty gaps, stage tiles in one swipeable row on phones ---------- */
+#status:empty,#result:empty,#hz:empty,#meet:empty,#donow:empty,#bar:empty,#psw:empty{display:none}
+.home{margin-top:6px}
+.pipe button{border-color:transparent;border-radius:var(--r-md);box-shadow:var(--shadow)}
+@media (max-width:899px){
+  .pipe{display:flex!important;overflow-x:auto;scrollbar-width:none;gap:8px;margin-inline:-16px;padding:2px 16px 8px}
+  .pipe::-webkit-scrollbar{display:none}
+  .pipe button{flex:0 0 118px}
+  .hero h2{font-size:22px}
+}
